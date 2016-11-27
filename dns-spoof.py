@@ -75,9 +75,10 @@ def call_httrack(default_path):
     os.chdir(default_path)
     subprocess.call(["rm","index.html"])
     try:
-        subprocess.call(["httrack", sys.argv[1]])
+        subprocess.call(["httrack","--connection-per-second=50","--sockets=80", \
+            "--disable-security-limits","-A100000000","-s0","-n",sys.argv[1]])
     except KeyboardInterrupt:
-        pass
+        subprocess.call(["rm","hts-in_progress.lock"])
     subprocess.call(["service","nginx","restart"])
     subprocess.call(["iptables","--flush","-t","nat"])
     subprocess.call(["iptables","-t","nat","-A","PREROUTING","-i",sys.argv[2],"-p","tcp","--destination-port", \
