@@ -63,9 +63,10 @@ def get_ip_address(ifname):
 def update_etter_dns(conf_path):
     ip_address = get_ip_address(sys.argv[2])
     subprocess.call(["rm",conf_path])
-
     new_line = sys.argv[1] + " A " + ip_address + "\n" + \
         sys.argv[1] + " PTR " + ip_address + "\n"
+    if sys.argv[1].count('.') > 1:
+        new_line += "*." + sys.argv[1].split('.',1)[1] + " A " + ip_address + "\n"
     with open(conf_path, 'w+') as f:
         if new_line not in f.read():
             f.write(new_line)
