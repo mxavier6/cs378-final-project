@@ -13,7 +13,8 @@ A simple tool to redirect
 
 + Run the follwing: 
 
-	`python3 dns-spoof.py<website-name><network interface>`
+	`$updatedb
+	 $python3 dns-spoof.py<website-name><network interface>`
 
 + Lolzilla Firefox
 
