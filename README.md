@@ -6,11 +6,13 @@ A simple tool to redirect
 
 
 
-## Installation 
-1. **IMPORTANT** Install Requirements
+## Usage
+1. **IMPORTANT** Install Requirements:
+
 python3, nginx, ettercap, locate, httrack, sslstrip
 
-2. Usage
+2. Run the follwing: 
+
 python3 dns-spoof.py<website-name><network interface>
 
 3. Lolzilla Firefox
