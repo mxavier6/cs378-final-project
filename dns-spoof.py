@@ -69,7 +69,10 @@ def get_ip_address(ifname):
     )[20:24])
 
 def update_etter_dns(conf_path):
-    ip_address = get_ip_address(sys.argv[2])
+    try:
+        ip_address = get_ip_address(sys.argv[2])
+    except OSError:
+        ip_address = input("Enter IP Address: ")
     subprocess.call(["rm",conf_path])
     new_line = sys.argv[1] + " A " + ip_address + "\n" + \
         sys.argv[1] + " PTR " + ip_address + "\n"
@@ -123,7 +126,8 @@ def set_up_nginx(default_path):
     subprocess.call(["mv","nginx.conf",default_path.rsplit('/',1)[0]])
     output = subprocess.Popen(['cat','/etc/passwd'], stdout=subprocess.PIPE).communicate()[0]
     output_list = output.decode().split(':')
-    if not any('nginx' in string for string in output_list):
+
+    if shutil.which("adduser") and not any('nginx' in string for string in output_list):
         subprocess.call(["adduser","--system","--no-create-home","--disabled-login","--disabled-password","--group","nginx"])
 
 def check_executables():
