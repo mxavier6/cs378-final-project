@@ -123,7 +123,7 @@ def set_up_nginx(default_path):
     subprocess.call(["mv","nginx.conf",default_path.rsplit('/',1)[0]])
     output = subprocess.Popen(['cat','/etc/passwd'], stdout=subprocess.PIPE).communicate()[0]
     output_list = output.decode().split(':')
-    if 'nginx' not in output_list:
+    if not any('nginx' in string for string in output_list):
         subprocess.call(["adduser","--system","--no-create-home","--disabled-login","--disabled-password","--group","nginx"])
 
 def check_executables():
