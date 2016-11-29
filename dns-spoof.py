@@ -56,6 +56,8 @@ def update_nginx_conf(conf_path):
     with open(conf_path, 'w') as f:
         for l in f_data:
             f.write(l)
+    if not os.path.exists(default_path):
+        os.makedirs(default_path)
     return default_path
 
 def get_ip_address(ifname):
