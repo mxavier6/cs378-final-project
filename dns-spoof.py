@@ -146,7 +146,8 @@ def print_help():
         "Example of <website-name> is www.google.com, example of network interface name is eth0, wlan0.\n" \
         "DEPENDENCIES: nginx, ettercap, locate, httrack, sslstrip.\n" \
         "This program MUST be run as the ROOT user.\n" \
-        "This program requires that PORTS 80 and 6666 are set as OPEN in the firewall.\n")
+        "This program requires that PORTS 80 and 6666 are set as OPEN in the firewall.\n" \
+        "Additionally, the // arguments in the ettercap call should be changed to /// if IPv6 support is enabled.\n")
 
 def main():
     try:
