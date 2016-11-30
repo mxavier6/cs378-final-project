@@ -7,7 +7,7 @@ import fcntl
 import struct
 
 # List of required programs
-EXECUTABLES = ['nginx', 'ettercap', 'locate', 'httrack', 'sslstrip']
+EXECUTABLES = ['nginx', 'ettercap', 'locate', 'wget', 'sslstrip']
 
 def find_file(file_name):
     """
@@ -188,7 +188,7 @@ def print_help():
     exit("This program is used as a phishing attack on the local area network (LAN).\n" \
         "USAGE: python3 dns-spoof.py <website-name> <network interface name>\n" \
         "Example of <website-name> is www.google.com, example of network interface name is eth0, wlan0.\n" \
-        "DEPENDENCIES: nginx, ettercap, locate, httrack, sslstrip.\n" \
+        "DEPENDENCIES: nginx, ettercap, locate, wget, sslstrip.\n" \
         "This program MUST be run as the ROOT user.\n" \
         "This program requires that PORTS 80 and 6666 are set as OPEN in the firewall.\n" \
         "Additionally, the /// arguments in the ettercap call should be changed to // if IPv6 support is not enabled.\n")
