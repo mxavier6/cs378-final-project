@@ -9,7 +9,7 @@ A simple tool to redirect
 ## Usage
 + **IMPORTANT** Install Requirements:
 
-	`python3, nginx, ettercap, locate, httrack, sslstrip`
+	`python3, nginx, ettercap, locate, wget, sslstrip`
 
 + Run the follwing: 
 
